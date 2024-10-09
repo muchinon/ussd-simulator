@@ -4,10 +4,13 @@ import cors from "cors";
 import ussdRoutes from "./routes/ussdRoute.js";
 import { connectDB } from "./config/database.js";
 import { seedDatabase } from "./config/seedData.js";
+import { restartServer } from "./restartServer.js";
 
 dotenv.config();
 
 const app = express();
+
+const PORT = process.env.PORT || 2500;
 
 // CORS configuration
 const corsOptions = {
@@ -21,11 +24,9 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Connect to MongoDB and seed the database
-(async () => {
-  await connectDB();
-  await seedDatabase();
-})();
+app.get("/api/v1/health", (req, res) => {
+  res.json({ status: "UP" });
+});
 
 // Routes
 app.use("/ussd", ussdRoutes);
@@ -36,9 +37,27 @@ app.use((err, req, res, next) => {
   res.status(500).send("Something went wrong!");
 });
 
-const PORT = process.env.PORT || 2500;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+const reboot = async () => {
+  setInterval(restartServer, process.env.INTERVAL);
+};
+
+connectDB()
+  .then(() => {
+    app.listen(PORT, () => {
+      reboot().then(() => {
+        console.log(`Server Restarted`);
+      });
+      console.log(`Server is connected to Port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.log(err);
+    process.exit(-1);
+  });
+
+// seed the database
+(async () => {
+  await seedDatabase();
+})();
 
 export default app;
