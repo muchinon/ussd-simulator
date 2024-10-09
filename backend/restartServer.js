@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const healthCheckUrl = "http://localhost:4000/api/v1/health"; // Replace with your actual health endpoint URL
+const healthCheckUrl = "https://ussd-simulator.onrender.com/api/v1/health";
 
 export const restartServer = async () => {
   try {
